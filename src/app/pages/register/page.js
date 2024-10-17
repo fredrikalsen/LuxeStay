@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { auth } from '../../../../firebaseConfig'; // Adjust path to your Firebase configuration
 import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { db } from '../../../../firebaseConfig'; // Ensure you import your Firestore configuration
+import { doc, setDoc } from 'firebase/firestore'; // Import Firestore functions
 
 export default function Register() {
   const [email, setEmail] = useState('');
@@ -16,8 +18,18 @@ export default function Register() {
     setError(null); // Clear previous errors
 
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      console.log('User registered successfully');
+      // Create user with email and password
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const userId = userCredential.user.uid; // Get the userId
+
+      console.log('User registered successfully:', userId);
+
+      // Create a user document in Firestore
+      await setDoc(doc(db, 'users', userId), {
+        email: email,
+        favorites: [], // Initialize an empty favorites array
+      });
+
       // Redirect to a welcome page or home page after successful registration
       router.push('/'); // Adjust the route as needed
     } catch (err) {

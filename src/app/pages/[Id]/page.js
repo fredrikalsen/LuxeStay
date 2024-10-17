@@ -3,29 +3,24 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../../../../firebaseConfig'; // Adjust path to your Firebase configuration
+import { db } from '../../../../firebaseConfig';
+import dynamic from 'next/dynamic';
 
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+// Dynamically import Leaflet components
+const MapContainer = dynamic(() => import('react-leaflet').then(mod => mod.MapContainer), { ssr: false });
+const TileLayer = dynamic(() => import('react-leaflet').then(mod => mod.TileLayer), { ssr: false });
+const Marker = dynamic(() => import('react-leaflet').then(mod => mod.Marker), { ssr: false });
+const Popup = dynamic(() => import('react-leaflet').then(mod => mod.Popup), { ssr: false });
 import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
-
-// Fix marker icon issues with Leaflet
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
-  iconUrl: require('leaflet/dist/images/marker-icon.png'),
-  shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
-});
 
 export default function PropertyDetails({ params }) {
   const router = useRouter();
   const [property, setProperty] = useState(null);
-  const { Id } = params; // Get the property ID from the URL parameters
+  const { Id } = params;
 
-  // Fetch property data from Firebase based on an ID
   useEffect(() => {
     const fetchProperty = async () => {
-      const docRef = doc(db, 'properties', Id); // Fetch property by ID
+      const docRef = doc(db, 'properties', Id);
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
@@ -39,10 +34,10 @@ export default function PropertyDetails({ params }) {
   }, [Id]);
 
   if (!property) {
-    return <div>Loading...</div>; // Loading state while fetching data
+    return <div>Loading...</div>;
   }
 
-  const position = [property.map_location.lat, property.map_location.lng]; // Ensure these values are numbers
+  const position = [property.map_location.lat, property.map_location.lng];
 
   return (
     <div className="relative min-h-screen pb-16">
@@ -60,13 +55,11 @@ export default function PropertyDetails({ params }) {
 
       {/* Property Details */}
       <div className="p-6 bg-white">
-        {/* Property Name, Location, Price */}
         <h1 className="text-2xl font-semibold">{property.name}</h1>
         <p className="text-gray-600">{property.location.city}, {property.location.country}</p>
         <p className="text-xl font-bold mt-2">{property.price}€ / night</p>
         <p className="text-sm text-gray-600">{property.guests} guests · {property.bedrooms} bedrooms · {property.bathrooms} bathrooms</p>
 
-        {/* Host Information */}
         <div className="flex items-center mt-4">
           <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
             {/* Host Avatar Placeholder */}
@@ -74,10 +67,8 @@ export default function PropertyDetails({ params }) {
           <p className="ml-2">Hosted by {property.host.name} (Rating: {property.host.rating})</p>
         </div>
 
-        {/* Property Description */}
         <p className="mt-4">{property.description}</p>
 
-        {/* Request Button */}
         <button className="mt-4 w-full bg-green-500 text-white p-3 rounded-lg">
           Request
         </button>
@@ -87,19 +78,27 @@ export default function PropertyDetails({ params }) {
       <div className="p-6 bg-white">
         <h3 className="font-semibold text-lg">Where you'll be</h3>
         <div className="mt-4">
-          {/* Leaflet Implementation */}
-          <MapContainer center={position} zoom={13} style={{ height: "400px", width: "100%" }}>
-            <TileLayer
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            />
-            <Marker position={position}>
-              <Popup>
-                {property.name}
-              </Popup>
-            </Marker>
-          </MapContainer>
+          {typeof window !== 'undefined' && (
+            <MapContainer 
+              key={Id} // Use unique key to avoid map re-initialization
+              center={position} 
+              zoom={13} 
+              style={{ height: "400px", width: "100%" }}
+              className="rounded-lg shadow-md"
+            >
+              <TileLayer
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              />
+              <Marker position={position}>
+                <Popup>
+                  {property.name}
+                </Popup>
+              </Marker>
+            </MapContainer>
+          )}
         </div>
+        <hr/>
       </div>
 
       {/* What this place offers */}
@@ -111,6 +110,7 @@ export default function PropertyDetails({ params }) {
           {!property.offers.no_parking && <li>✔ Parking available</li>}
           {property.offers.pets_allowed && <li>✔ Pets allowed</li>}
         </ul>
+        <hr className="my-4 border-gray-300" />
       </div>
 
       {/* House Rules */}
@@ -120,6 +120,7 @@ export default function PropertyDetails({ params }) {
         <p>Check-out: {property.house_rules.check_out}</p>
         {property.house_rules.no_smoking && <p>✔ No smoking</p>}
         {!property.house_rules.security_services && <p>No security services</p>}
+        <hr className="my-4 border-gray-300" />
       </div>
 
       {/* Safety */}
@@ -127,6 +128,7 @@ export default function PropertyDetails({ params }) {
         <h3 className="font-semibold text-lg">Safety</h3>
         {property.safety.private_entrance && <p>✔ Private entrance</p>}
         {property.safety.smoke_detector && <p>✔ Smoke detector</p>}
+        <hr className="my-4 border-gray-300" />
       </div>
 
       {/* Property Features */}
@@ -144,8 +146,8 @@ export default function PropertyDetails({ params }) {
           {property.property_features.balcony && <li>✔ Balcony</li>}
           {property.property_features.city_view && <li>✔ City view</li>}
           {property.property_features.overwater_bungalow && <li>✔ Overwater bungalow</li>}
-          {/* Add other features as needed */}
         </ul>
+        <hr className="my-4 border-gray-300" />
       </div>
 
       {/* Services */}
@@ -155,6 +157,7 @@ export default function PropertyDetails({ params }) {
         {property.services.laundry && <p>✔ Laundry service</p>}
         {property.services.spa && <p>✔ Spa</p>}
         {property.services.ski_rentals && <p>✔ Ski rentals</p>}
+        <hr className="my-4 border-gray-300" />
       </div>
     </div>
   );
