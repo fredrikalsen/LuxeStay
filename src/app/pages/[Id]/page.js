@@ -39,6 +39,11 @@ export default function PropertyDetails({ params }) {
 
   const position = [property.map_location.lat, property.map_location.lng];
 
+  const handleRequest = () => {
+    const url = `/pages/Booking-request/${Id}?name=${encodeURIComponent(property.name)}&price=${property.price}&imageUrl=${encodeURIComponent(property.imageUrl || '/placeholder.jpg')}`;
+    router.push(url);
+  };
+
   return (
     <div className="relative min-h-screen pb-16">
       {/* Property Image */}
@@ -69,7 +74,7 @@ export default function PropertyDetails({ params }) {
 
         <p className="mt-4">{property.description}</p>
 
-        <button className="mt-4 w-full bg-green-500 text-white p-3 rounded-lg">
+        <button className="mt-4 w-full bg-green-500 text-white p-3 rounded-lg" onClick={handleRequest}>
           Request
         </button>
       </div>
@@ -78,7 +83,7 @@ export default function PropertyDetails({ params }) {
       <div className="p-6 bg-white">
         <h3 className="font-semibold text-lg">Where you'll be</h3>
         <div className="mt-4">
-          {typeof window !== 'undefined' && (
+        {typeof window !== 'undefined' && (
             <MapContainer 
               key={Id} // Use unique key to avoid map re-initialization
               center={position} 
@@ -98,7 +103,7 @@ export default function PropertyDetails({ params }) {
             </MapContainer>
           )}
         </div>
-        <hr/>
+        <hr />
       </div>
 
       {/* What this place offers */}
