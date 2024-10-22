@@ -4,7 +4,7 @@
 import { useSearchParams } from 'next/navigation'; 
 import { parseISO, format } from 'date-fns'; 
 import { doc, updateDoc, arrayUnion } from 'firebase/firestore'; // Import Firestore functions
-import { auth, db } from '../../../../../firebaseConfig'; // Adjust the path to your Firebase config
+import { auth, db } from '../../../../firebaseConfig'; // Adjust the path to your Firebase config
 import { useRouter } from 'next/navigation'; // Import useRouter
 
 export default function Payment({ params }) {
@@ -65,6 +65,10 @@ export default function Payment({ params }) {
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center p-6">
+      {/* Confirmation Message */}
+      <h1 className="text-2xl font-bold mb-6">Your Booking is Confirmed!</h1>
+      <p className="mb-4 text-lg">Thank you for choosing us. We look forward to welcoming you!</p>
+
       {/* Card Section */}
       <div className="w-full max-w-lg bg-white rounded-lg shadow-md p-6">
         {/* Property Details */}
@@ -110,12 +114,12 @@ export default function Payment({ params }) {
         </div>
       </div>
 
-      {/* Reserve Button */}
+      {/* Return to Home Button */}
       <button
-        onClick={handleReservation}
-        className="mt-6 w-full max-w-lg bg-black text-white py-3 rounded-lg shadow-md"
+        onClick={() => router.push('/')} // Navigate to the home page
+        className="mt-6 w-full max-w-lg bg-blue-500 text-white py-3 rounded-lg shadow-md"
       >
-        Reserve Now
+        Return to Home
       </button>
     </div>
   );

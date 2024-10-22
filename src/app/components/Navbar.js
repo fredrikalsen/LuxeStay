@@ -39,7 +39,7 @@ export default function Navbar() {
         </div>
 
         {/* Trips */}
-        <div className="flex flex-col items-center" onClick={() => router.push('/trips')}>
+        <div className="flex flex-col items-center" onClick={() => router.push('/pages/Trips')}>
           <HomeIcon className="h-6 w-6 text-gray-500" />
           <span className="text-xs text-gray-600">Trips</span>
         </div>

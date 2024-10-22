@@ -47,6 +47,10 @@ export default function ProfilePage() {
         </div>
       </div>
 
+      <button className="absolute top-4 left-4 p-2 bg-white rounded-full shadow-lg" onClick={() => router.back()}>
+          Back
+        </button>
+
       {/* Account Settings Section */}
       <div className="bg-white w-full mt-6 shadow-sm">
         <h3 className="p-4 text-gray-600 font-semibold">Account settings</h3>

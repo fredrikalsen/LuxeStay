@@ -24,10 +24,11 @@ export default function Register() {
 
       console.log('User registered successfully:', userId);
 
-      // Create a user document in Firestore
+      // Create a user document in Firestore with bookings array
       await setDoc(doc(db, 'users', userId), {
         email: email,
         favorites: [], // Initialize an empty favorites array
+        bookings: [], // Initialize an empty bookings array
       });
 
       // Redirect to a welcome page or home page after successful registration
