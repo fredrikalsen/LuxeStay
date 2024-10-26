@@ -33,6 +33,18 @@ export default function PropertyDetails({ params }) {
     fetchProperty();
   }, [Id]);
 
+  const renderStars = (rating) => {
+    const stars = [];
+    for (let i = 1; i <= 5; i++) {
+      if (i <= rating) {
+        stars.push(<span key={i} className="text-yellow-500">&#9733;</span>); // Filled star
+      } else {
+        stars.push(<span key={i} className="text-gray-300">&#9734;</span>); // Empty star
+      }
+    }
+    return stars;
+  };
+
   if (!property) {
     return <div>Loading...</div>;
   }
@@ -83,7 +95,7 @@ export default function PropertyDetails({ params }) {
       <div className="p-6 bg-white">
         <h3 className="font-semibold text-lg">Where you'll be</h3>
         <div className="mt-4">
-        {typeof window !== 'undefined' && (
+          {typeof window !== 'undefined' && (
             <MapContainer 
               key={Id} // Use unique key to avoid map re-initialization
               center={position} 
@@ -163,6 +175,33 @@ export default function PropertyDetails({ params }) {
         {property.services.spa && <p>✔ Spa</p>}
         {property.services.ski_rentals && <p>✔ Ski rentals</p>}
         <hr className="my-4 border-gray-300" />
+      </div>
+
+      {/* Reviews */}
+      <div className="p-6 bg-white">
+        <h3 className="font-semibold text-lg">Reviews</h3>
+        {property.reviews && property.reviews.length > 0 ? (
+          <div className="flex overflow-x-auto space-x-4 mt-4">
+            {property.reviews.slice(0, 5).map((review, index) => (
+              <div key={index} className="min-w-[250px] border p-4 rounded-lg shadow-sm flex-shrink-0">
+                <p className="font-semibold">{review.name}</p> 
+                <p className="text-gray-500">{review.createdAt}</p>
+                <p className="mt-2">{review.text}</p>
+                <div className="flex mt-2">
+                  {renderStars(review.rating)}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-500 mt-4">No reviews yet.</p>
+        )}
+
+        {property.reviews && property.reviews.length > 5 && (
+          <button className="mt-4 w-full bg-gray-200 text-black p-3 rounded-lg">
+            Show all reviews
+          </button>
+        )}
       </div>
     </div>
   );

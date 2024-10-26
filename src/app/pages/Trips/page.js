@@ -2,26 +2,28 @@
 
 import { useEffect, useState } from 'react';
 import { auth, db } from '../../../../firebaseConfig'; // Adjust path to your Firebase config
-import { doc, getDoc, updateDoc, arrayRemove } from 'firebase/firestore'; // Firestore functions
-import { useRouter } from 'next/navigation'; // For navigation
+import { doc, getDoc, updateDoc } from 'firebase/firestore'; // Firestore functions
+import { useRouter } from 'next/navigation';
 import Navbar from '../../components/Navbar';
 
 export default function Trips() {
   const [bookings, setBookings] = useState([]);
-  const [activeTab, setActiveTab] = useState('upcoming'); // 'upcoming' or 'done'
-  const [selectedBooking, setSelectedBooking] = useState(null); // Track the booking to cancel
-  const [showModal, setShowModal] = useState(false); // Track modal visibility
-  const router = useRouter(); // For redirecting to details page
+  const [activeTab, setActiveTab] = useState('upcoming');
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [reviewText, setReviewText] = useState(''); // Review text
+  const [rating, setRating] = useState(5); // Star rating
+  const [reviewerName, setReviewerName] = useState(''); // Reviewer name
+  const router = useRouter();
 
-  // Fetch user bookings from Firestore
   useEffect(() => {
     const fetchBookings = async () => {
-      const userId = auth.currentUser?.uid; // Check if the user is logged in
+      const userId = auth.currentUser?.uid;
       if (userId) {
         const userDoc = await getDoc(doc(db, 'users', userId));
         if (userDoc.exists()) {
           const userData = userDoc.data();
-          setBookings(userData.bookings || []); // Set bookings from Firestore
+          setBookings(userData.bookings || []);
         }
       }
     };
@@ -29,7 +31,6 @@ export default function Trips() {
     fetchBookings();
   }, []);
 
-  // Filter bookings based on activeTab
   const filteredBookings = bookings.filter((booking) => {
     const currentDate = new Date();
     const checkOutDate = new Date(booking.checkOutDate);
@@ -38,37 +39,66 @@ export default function Trips() {
       : checkOutDate <= currentDate;
   });
 
-  // Open the modal for cancel confirmation
-  const handleCancelClick = (booking) => {
+  const handleReviewClick = (booking) => {
     setSelectedBooking(booking);
-    setShowModal(true); // Show confirmation modal
+    setShowModal(true);
   };
 
-  // Handle booking cancellation
-  const handleCancelBooking = async () => {
+  const submitReview = async () => {
     if (selectedBooking) {
-      const userId = auth.currentUser?.uid;
-      const userDocRef = doc(db, 'users', userId);
-
+      const propertyDocRef = doc(db, 'properties', selectedBooking.propertyId);
+  
       try {
-        // Remove booking from Firestore using arrayRemove
-        await updateDoc(userDocRef, {
-          bookings: arrayRemove(selectedBooking),
+        // Retrieve the current property data, including host and reviews
+        const propertyDoc = await getDoc(propertyDocRef);
+        if (!propertyDoc.exists()) throw new Error('Property not found');
+  
+        const propertyData = propertyDoc.data();
+        const host = propertyData.host;
+        const reviews = propertyData.reviews || [];
+  
+        // Get the current date for the review
+        const reviewDate = new Date();
+        const formattedDate = `${reviewDate.getDate()}-${reviewDate.getMonth() + 1}-${reviewDate.getFullYear()}`;
+  
+        // Add the new review with the created date
+        const updatedReviews = [
+          ...reviews,
+          { name: reviewerName, text: reviewText, rating, createdAt: formattedDate }
+        ];
+        
+        // Calculate the new average rating
+        const newAverageRating = (
+          updatedReviews.reduce((sum, review) => sum + review.rating, 0) /
+          updatedReviews.length
+        ).toFixed(1);
+  
+        // Update Firestore with the new reviews array and updated average rating
+        await updateDoc(propertyDocRef, {
+          reviews: updatedReviews,
+          'host.rating': newAverageRating,
         });
-
-        // Update local state after deletion
-        setBookings((prevBookings) =>
-          prevBookings.filter((b) => b !== selectedBooking)
-        );
-
-        alert('Booking cancelled successfully!');
-        setShowModal(false); // Close modal after cancellation
-        setSelectedBooking(null); // Clear selected booking
+  
+        alert('Review submitted successfully!');
+        setShowModal(false);
+        setReviewText('');
+        setRating(5);
+        setReviewerName(''); // Clear the name input
+        setSelectedBooking(null);
       } catch (error) {
-        console.error('Error cancelling booking:', error);
-        alert('Error cancelling booking: ' + error.message);
+        console.error('Error submitting review:', error);
+        alert('Error submitting review: ' + error.message);
       }
     }
+  };
+
+  // Function to format the date to display as YYYY-MM-DD
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
 
   return (
@@ -76,7 +106,6 @@ export default function Trips() {
       <h1 className="text-2xl font-semibold text-center mb-6">Trips</h1>
       <Navbar />
 
-      {/* Tab Switcher */}
       <div className="flex justify-center mb-6">
         <button
           onClick={() => setActiveTab('upcoming')}
@@ -100,7 +129,6 @@ export default function Trips() {
         </button>
       </div>
 
-      {/* Bookings List */}
       {filteredBookings.length > 0 ? (
         filteredBookings.map((booking, index) => (
           <div key={index} className="bg-white p-4 rounded-lg shadow-md mb-4">
@@ -113,19 +141,21 @@ export default function Trips() {
               <div>
                 <p className="text-sm font-semibold">Booking ID: {index + 1}</p>
                 <p className="text-sm text-gray-500">
-                  Booking Date: {booking.checkInDate} - {booking.checkOutDate}
+                  Booking Date: {formatDate(booking.checkInDate)} - {formatDate(booking.checkOutDate)}
                 </p>
                 <h2 className="text-lg font-semibold">{booking.name}</h2>
                 <p className="text-sm text-gray-500">Marbella, Spain</p>
               </div>
             </div>
             <div className="flex justify-between">
-              <button
-                onClick={() => handleCancelClick(booking)}
-                className="bg-gray-200 text-black py-2 px-4 rounded-md"
-              >
-                Cancel
-              </button>
+              {activeTab === 'done' && (
+                <button
+                  onClick={() => handleReviewClick(booking)}
+                  className="bg-gray-200 text-black py-2 px-4 rounded-md"
+                >
+                  Write a Review
+                </button>
+              )}
               <button
                 onClick={() => router.push(`/trips/${booking.propertyId}`)}
                 className="bg-black text-white py-2 px-4 rounded-md"
@@ -139,31 +169,52 @@ export default function Trips() {
         <p className="text-center text-gray-500">No {activeTab} trips.</p>
       )}
 
-      {/* Confirmation Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 shadow-lg w-80">
             <h2 className="text-lg font-semibold mb-4 text-center">
-              Are you sure you want to cancel your reservation?
+              Write a Review
             </h2>
+            <div className="flex justify-center mb-4">
+              {[...Array(5)].map((_, index) => (
+                <span
+                  key={index}
+                  onClick={() => setRating(index + 1)}
+                  className={`cursor-pointer ${index < rating ? 'text-yellow-500 text-4xl' : 'text-gray-300 text-4xl'}`}
+                >
+                  ★
+                </span>
+              ))}
+            </div>
+            <input
+              type="text"
+              value={reviewerName}
+              onChange={(e) => setReviewerName(e.target.value)}
+              placeholder="Your Name"
+              className="w-full border rounded-md p-2 mb-4"
+            />
+            <textarea
+              value={reviewText}
+              onChange={(e) => setReviewText(e.target.value)}
+              placeholder="Write your review..."
+              className="w-full border rounded-md p-2 mb-4"
+            />
             <div className="flex justify-between">
               <button
-                onClick={() => setShowModal(false)} // Close modal on "Keep Reservation"
+                onClick={() => setShowModal(false)}
                 className="bg-gray-200 text-black py-2 px-4 rounded-md"
               >
-                Keep Reservation
+                Cancel
               </button>
               <button
-                onClick={handleCancelBooking} // Proceed with cancellation
+                onClick={submitReview}
                 className="bg-black text-white py-2 px-4 rounded-md"
               >
-                Cancel Reservation
+                Submit
               </button>
-              
-            </div>     
-          </div>   
+            </div>
+          </div>
         </div>
-        
       )}
     </div>
   );

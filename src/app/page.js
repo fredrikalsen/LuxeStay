@@ -1,4 +1,3 @@
-// homepage.js
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -156,8 +155,8 @@ export default function Home() {
                 </Link>
 
                 <button onClick={() => handleFavorite(property.id)} className="absolute top-4 right-4">
-                  <span className={`text-2xl ${favoriteIds.includes(property.id) ? 'text-red-500' : 'text-white'}`}>
-                    ♥
+                  <span className={`text-2xl ${favoriteIds.includes(property.id) ? 'text-yellow-500' : 'text-gray-300'}`}>
+                    ★
                   </span>
                 </button>
               </div>
