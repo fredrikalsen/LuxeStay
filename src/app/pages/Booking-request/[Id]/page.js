@@ -139,6 +139,9 @@ export default function BookingRequest({ params }) {
       >
         Confirm Booking
       </button>
+      <button className="absolute top-4 left-4 p-2 bg-white rounded-full shadow-lg" onClick={() => router.back()}>
+          Back
+        </button>
     </div>
   );
 }

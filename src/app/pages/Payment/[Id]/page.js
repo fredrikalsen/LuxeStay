@@ -1,18 +1,20 @@
 'use client';
 
-// Import necessary modules
-import { useSearchParams } from 'next/navigation'; 
-import { parseISO, format } from 'date-fns'; 
-import { doc, updateDoc, arrayUnion } from 'firebase/firestore'; // Import Firestore functions
-import { auth, db } from '../../../../../firebaseConfig'; // Adjust the path to your Firebase config
-import { useRouter } from 'next/navigation'; // Import useRouter
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { parseISO, format } from 'date-fns';
+import { doc, updateDoc, arrayUnion, getDoc } from 'firebase/firestore';
+import { auth, db } from '../../../../../firebaseConfig';
+import { useRouter } from 'next/navigation';
+import { FaCcVisa, FaCcMastercard } from 'react-icons/fa';
+import { v4 as uuidv4 } from 'uuid'; // Import UUID library
 
 export default function Payment({ params }) {
-  const { Id } = params; 
-  const searchParams = useSearchParams(); 
-  const router = useRouter(); // Initialize the router
+  const { Id } = params;
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
-  // Extract query parameters from searchParams
+  // Extract query parameters
   const totalPrice = searchParams.get('totalPrice');
   const name = searchParams.get('name');
   const imageUrl = searchParams.get('imageUrl');
@@ -23,14 +25,40 @@ export default function Payment({ params }) {
   const checkInDate = searchParams.get('checkInDate');
   const checkOutDate = searchParams.get('checkOutDate');
 
-  // Handle the reservation logic
-  const handleReservation = async () => {
-    const userId = auth.currentUser.uid; // Get the current user's ID
-    const userDocRef = doc(db, 'users', userId); // Reference to the user's document
+  const [paymentMethods, setPaymentMethods] = useState([]);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-    // Create a booking object to add
+  useEffect(() => {
+    const fetchPaymentMethods = async () => {
+      const userId = auth.currentUser?.uid;
+      if (userId) {
+        const userDocRef = doc(db, 'users', userId);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          const methods = userDoc.data().paymentMethods || [];
+          setPaymentMethods(methods);
+          setSelectedPaymentMethod(methods[0]); // Select the first method by default
+        }
+      }
+    };
+
+    fetchPaymentMethods();
+  }, []);
+
+  const handleReservation = async () => {
+    const userId = auth.currentUser?.uid;
+    if (!userId || !selectedPaymentMethod) {
+      alert('Please log in and select a payment method to proceed.');
+      return;
+    }
+
+    // Create a unique booking ID
+    const bookingId = uuidv4();
+
     const booking = {
-      propertyId: Id, // Assuming Id is the property ID you're booking
+      bookingId, // Include the booking ID
+      propertyId: Id,
       name,
       imageUrl,
       totalPrice,
@@ -40,34 +68,39 @@ export default function Payment({ params }) {
       pricePerNight,
       cleaningFee,
       serviceFee,
-      createdAt: new Date(), // Optional: timestamp for the booking
+      createdAt: new Date(),
     };
 
+    const userDocRef = doc(db, 'users', userId);
+
     try {
-      // Update the user's document with the new booking
       await updateDoc(userDocRef, {
-        bookings: arrayUnion(booking), // Use arrayUnion to add the booking to the array
+        bookings: arrayUnion(booking),
       });
-      
-      // Navigate to the booking confirmation page with query parameters
+
       router.push(`/pages/Booking-confirmation?totalPrice=${totalPrice}&name=${encodeURIComponent(name)}&imageUrl=${encodeURIComponent(imageUrl)}&nights=${nights}&pricePerNight=${pricePerNight}&cleaningFee=${cleaningFee}&serviceFee=${serviceFee}&checkInDate=${checkInDate}&checkOutDate=${checkOutDate}`);
       
-      alert('Reservation confirmed!');
     } catch (error) {
       console.error('Error adding booking:', error);
-      alert('Error adding booking: ' + error.message); // Display error message
+      alert('Error adding booking: ' + error.message);
     }
   };
 
-  // Format the dates
   const formattedCheckInDate = checkInDate ? format(parseISO(checkInDate), 'MMMM d, yyyy') : '';
   const formattedCheckOutDate = checkOutDate ? format(parseISO(checkOutDate), 'MMMM d, yyyy') : '';
 
+  const openModal = () => setIsModalOpen(true);
+  const closeModal = () => setIsModalOpen(false);
+
+  const handleSelectPaymentMethod = (method) => {
+    setSelectedPaymentMethod(method);
+    closeModal();
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center p-6">
-      {/* Card Section */}
+      {/* Booking Details */}
       <div className="w-full max-w-lg bg-white rounded-lg shadow-md p-6">
-        {/* Property Details */}
         <div className="flex items-center mb-4">
           <img src={imageUrl} alt={name} className="w-16 h-16 object-cover rounded-md mr-4" />
           <div>
@@ -76,7 +109,6 @@ export default function Payment({ params }) {
           </div>
         </div>
 
-        {/* Date and Guests */}
         <div className="flex justify-between mb-4">
           <div>
             <p className="text-gray-600">Check-in</p>
@@ -88,7 +120,6 @@ export default function Payment({ params }) {
           </div>
         </div>
 
-        {/* Price Breakdown */}
         <div className="border-t border-gray-200 pt-4">
           <h2 className="text-sm font-semibold mb-2">Price details</h2>
           <div className="flex justify-between mb-2">
@@ -110,13 +141,77 @@ export default function Payment({ params }) {
         </div>
       </div>
 
+      {/* Payment Method Section */}
+      <div className="w-full max-w-lg p-4 mt-6">
+        <h2 className="text-sm font-semibold mb-4">Payment method</h2>
+        <div className="flex justify-between items-center">
+          {selectedPaymentMethod ? (
+            <>
+              <div className="flex items-center">
+                {selectedPaymentMethod.cardType === 'Visa' && <FaCcVisa className="text-blue-600 text-2xl mr-2" />}
+                {selectedPaymentMethod.cardType === 'MasterCard' && <FaCcMastercard className="text-red-600 text-2xl mr-2" />}
+                <p>{selectedPaymentMethod.cardType} {selectedPaymentMethod.cardNumber}</p>
+              </div>
+              <button
+                onClick={openModal}
+                className="text-blue-500"
+              >
+                Change
+              </button>
+            </>
+          ) : (
+            <>
+              <p>No payment method selected</p>
+              <button
+                onClick={() => router.push('/pages/payments')}
+                className="mt-4 text-blue-500 underline"
+              >
+                Add a payment method
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+
       {/* Reserve Button */}
       <button
         onClick={handleReservation}
         className="mt-6 w-full max-w-lg bg-black text-white py-3 rounded-lg shadow-md"
       >
-        Reserve Now
+        Reserve
       </button>
+      <button className="absolute top-4 left-4 p-2 bg-white rounded-full shadow-lg" onClick={() => router.back()}>
+          Back
+        </button>
+
+      {/* Modal for Selecting Payment Method */}
+      {isModalOpen && (
+        <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50">
+          <div className="bg-white rounded-lg shadow-lg max-w-lg w-full p-6">
+            <h2 className="text-lg font-semibold mb-4">Select Payment Method</h2>
+            {paymentMethods.length > 0 ? (
+              paymentMethods.map((method, index) => (
+                <div
+                  key={index}
+                  onClick={() => handleSelectPaymentMethod(method)}
+                  className="flex items-center justify-between py-3 border-b border-gray-200 last:border-b-0 cursor-pointer hover:bg-gray-100"
+                >
+                  <div className="flex items-center">
+                    {method.cardType === 'Visa' && <FaCcVisa className="text-blue-600 text-2xl mr-2" />}
+                    {method.cardType === 'MasterCard' && <FaCcMastercard className="text-red-600 text-2xl mr-2" />}
+                    <p>{method.cardType} {method.cardNumber}</p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p>No payment methods available</p>
+            )}
+            <button className="mt-4 w-full bg-blue-500 text-white py-2 rounded-lg" onClick={closeModal}>
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

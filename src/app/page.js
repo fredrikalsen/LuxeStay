@@ -4,10 +4,12 @@ import { useEffect, useState } from 'react';
 import { collection, getDocs, doc, updateDoc, arrayUnion, arrayRemove, getDoc } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 import Navbar from './components/Navbar';
+import NavbarDesktop from './components/NavbarDesktop';
 import Link from 'next/link';
 import SearchBar from './components/Searchbar';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../../firebaseConfig';
+import { useMediaQuery } from 'react-responsive';
 
 export default function Home() {
   const [properties, setProperties] = useState([]);
@@ -15,6 +17,9 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
   const [favoriteIds, setFavoriteIds] = useState([]);
+  
+  // Media query to check if the user is on a desktop screen
+  const isDesktop = useMediaQuery({ minWidth: 1024 });
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -128,7 +133,8 @@ export default function Home() {
 
   return (
     <div className="relative min-h-screen pb-16">
-      <SearchBar onSearch={handleSearch} onApplyFilters={handleApplyFilters} />
+      {/* Conditionally render the SearchBar or NavbarDesktop based on screen size */}
+      {isDesktop ? <NavbarDesktop /> : <SearchBar onSearch={handleSearch} onApplyFilters={handleApplyFilters} />}
 
       <div className="container mx-auto p-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
@@ -167,7 +173,8 @@ export default function Home() {
         </div>
       </div>
 
-      <Navbar />
+      {/* Conditionally render Navbar based on screen size */}
+      {!isDesktop && <Navbar />}
     </div>
   );
 }

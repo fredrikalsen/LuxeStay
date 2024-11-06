@@ -3,16 +3,16 @@
 // Import necessary modules
 import { useSearchParams } from 'next/navigation'; 
 import { parseISO, format } from 'date-fns'; 
-import { doc, updateDoc, arrayUnion } from 'firebase/firestore'; // Import Firestore functions
-import { auth, db } from '../../../../firebaseConfig'; // Adjust the path to your Firebase config
-import { useRouter } from 'next/navigation'; // Import useRouter
+import { doc, updateDoc, arrayUnion } from 'firebase/firestore'; 
+import { auth, db } from '../../../../firebaseConfig'; 
+import { useRouter } from 'next/navigation'; 
 
 export default function Payment({ params }) {
   const { Id } = params; 
   const searchParams = useSearchParams(); 
-  const router = useRouter(); // Initialize the router
+  const router = useRouter(); 
 
-  // Extract query parameters from searchParams
+  
   const totalPrice = searchParams.get('totalPrice');
   const name = searchParams.get('name');
   const imageUrl = searchParams.get('imageUrl');
@@ -23,14 +23,14 @@ export default function Payment({ params }) {
   const checkInDate = searchParams.get('checkInDate');
   const checkOutDate = searchParams.get('checkOutDate');
 
-  // Handle the reservation logic
+ 
   const handleReservation = async () => {
-    const userId = auth.currentUser.uid; // Get the current user's ID
-    const userDocRef = doc(db, 'users', userId); // Reference to the user's document
+    const userId = auth.currentUser.uid; 
+    const userDocRef = doc(db, 'users', userId); 
 
-    // Create a booking object to add
+    
     const booking = {
-      propertyId: Id, // Assuming Id is the property ID you're booking
+      propertyId: Id, 
       name,
       imageUrl,
       totalPrice,
@@ -40,22 +40,22 @@ export default function Payment({ params }) {
       pricePerNight,
       cleaningFee,
       serviceFee,
-      createdAt: new Date(), // Optional: timestamp for the booking
+      createdAt: new Date(), 
     };
 
     try {
-      // Update the user's document with the new booking
+      
       await updateDoc(userDocRef, {
-        bookings: arrayUnion(booking), // Use arrayUnion to add the booking to the array
+        bookings: arrayUnion(booking), 
       });
       
-      // Navigate to the booking confirmation page with query parameters
+      
       router.push(`/pages/Booking-confirmation?totalPrice=${totalPrice}&name=${encodeURIComponent(name)}&imageUrl=${encodeURIComponent(imageUrl)}&nights=${nights}&pricePerNight=${pricePerNight}&cleaningFee=${cleaningFee}&serviceFee=${serviceFee}&checkInDate=${checkInDate}&checkOutDate=${checkOutDate}`);
       
       alert('Reservation confirmed!');
     } catch (error) {
       console.error('Error adding booking:', error);
-      alert('Error adding booking: ' + error.message); // Display error message
+      alert('Error adding booking: ' + error.message); 
     }
   };
 
