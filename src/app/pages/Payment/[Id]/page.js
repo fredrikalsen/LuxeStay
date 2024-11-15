@@ -8,11 +8,16 @@ import { auth, db } from '../../../../../firebaseConfig';
 import { useRouter } from 'next/navigation';
 import { FaCcVisa, FaCcMastercard } from 'react-icons/fa';
 import { v4 as uuidv4 } from 'uuid'; // Import UUID library
+import Navbar from '../../../components/Navbar';
+import NavbarDesktop from '../../../components/NavbarDesktop';
+import Footer from '../../../components/Footer';
+import { useMediaQuery } from 'react-responsive';
 
 export default function Payment({ params }) {
   const { Id } = params;
   const searchParams = useSearchParams();
   const router = useRouter();
+  const isDesktop = useMediaQuery({ minWidth: 1024 });
 
   // Extract query parameters
   const totalPrice = searchParams.get('totalPrice');
@@ -98,91 +103,95 @@ export default function Payment({ params }) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center p-6">
-      {/* Booking Details */}
-      <div className="w-full max-w-lg bg-white rounded-lg shadow-md p-6">
-        <div className="flex items-center mb-4">
-          <img src={imageUrl} alt={name} className="w-16 h-16 object-cover rounded-md mr-4" />
-          <div>
-            <h1 className="text-lg font-semibold">{name}</h1>
-            <p className="text-gray-500">Marbella, Spain</p>
+    <div className="flex flex-col min-h-screen">
+      {isDesktop ? <NavbarDesktop /> : <Navbar />}
+      <main className="flex-grow bg-gray-100 flex flex-col items-center justify-center p-6">
+        {/* Booking Details */}
+        <div className="w-full max-w-lg bg-white rounded-lg shadow-md p-6">
+          <div className="flex items-center mb-4">
+            <img src={imageUrl} alt={name} className="w-16 h-16 object-cover rounded-md mr-4" />
+            <div>
+              <h1 className="text-lg font-semibold">{name}</h1>
+              <p className="text-gray-500">Marbella, Spain</p>
+            </div>
           </div>
-        </div>
 
-        <div className="flex justify-between mb-4">
-          <div>
-            <p className="text-gray-600">Check-in</p>
-            <p className="font-semibold">{formattedCheckInDate}</p>
-          </div>
-          <div>
-            <p className="text-gray-600">Check-out</p>
-            <p className="font-semibold">{formattedCheckOutDate}</p>
-          </div>
-        </div>
-
-        <div className="border-t border-gray-200 pt-4">
-          <h2 className="text-sm font-semibold mb-2">Price details</h2>
-          <div className="flex justify-between mb-2">
-            <p>€{pricePerNight} x {nights} nights</p>
-            <p className="font-semibold">€{pricePerNight * nights}</p>
-          </div>
-          <div className="flex justify-between mb-2">
-            <p>Cleaning fee</p>
-            <p className="font-semibold">€{cleaningFee}</p>
-          </div>
           <div className="flex justify-between mb-4">
-            <p>Service fee</p>
-            <p className="font-semibold">€{serviceFee}</p>
+            <div>
+              <p className="text-gray-600">Check-in</p>
+              <p className="font-semibold">{formattedCheckInDate}</p>
+            </div>
+            <div>
+              <p className="text-gray-600">Check-out</p>
+              <p className="font-semibold">{formattedCheckOutDate}</p>
+            </div>
           </div>
-          <div className="border-t border-gray-200 pt-4 flex justify-between">
-            <p className="font-semibold">Total (EUR)</p>
-            <p className="font-semibold">€{totalPrice}</p>
+
+          <div className="border-t border-gray-200 pt-4">
+            <h2 className="text-sm font-semibold mb-2">Price details</h2>
+            <div className="flex justify-between mb-2">
+              <p>€{pricePerNight} x {nights} nights</p>
+              <p className="font-semibold">€{pricePerNight * nights}</p>
+            </div>
+            <div className="flex justify-between mb-2">
+              <p>Cleaning fee</p>
+              <p className="font-semibold">€{cleaningFee}</p>
+            </div>
+            <div className="flex justify-between mb-4">
+              <p>Service fee</p>
+              <p className="font-semibold">€{serviceFee}</p>
+            </div>
+            <div className="border-t border-gray-200 pt-4 flex justify-between">
+              <p className="font-semibold">Total (EUR)</p>
+              <p className="font-semibold">€{totalPrice}</p>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Payment Method Section */}
-      <div className="w-full max-w-lg p-4 mt-6">
-        <h2 className="text-sm font-semibold mb-4">Payment method</h2>
-        <div className="flex justify-between items-center">
-          {selectedPaymentMethod ? (
-            <>
-              <div className="flex items-center">
-                {selectedPaymentMethod.cardType === 'Visa' && <FaCcVisa className="text-blue-600 text-2xl mr-2" />}
-                {selectedPaymentMethod.cardType === 'MasterCard' && <FaCcMastercard className="text-red-600 text-2xl mr-2" />}
-                <p>{selectedPaymentMethod.cardType} {selectedPaymentMethod.cardNumber}</p>
-              </div>
-              <button
-                onClick={openModal}
-                className="text-blue-500"
-              >
-                Change
-              </button>
-            </>
-          ) : (
-            <>
-              <p>No payment method selected</p>
-              <button
-                onClick={() => router.push('/pages/payments')}
-                className="mt-4 text-blue-500 underline"
-              >
-                Add a payment method
-              </button>
-            </>
-          )}
+        {/* Payment Method Section */}
+        <div className="w-full max-w-lg p-4 mt-6">
+          <h2 className="text-sm font-semibold mb-4">Payment method</h2>
+          <div className="flex justify-between items-center">
+            {selectedPaymentMethod ? (
+              <>
+                <div className="flex items-center">
+                  {selectedPaymentMethod.cardType === 'Visa' && <FaCcVisa className="text-blue-600 text-2xl mr-2" />}
+                  {selectedPaymentMethod.cardType === 'MasterCard' && <FaCcMastercard className="text-red-600 text-2xl mr-2" />}
+                  <p>{selectedPaymentMethod.cardType} {selectedPaymentMethod.cardNumber}</p>
+                </div>
+                <button
+                  onClick={openModal}
+                  className="text-textPrimary"
+                >
+                  Change
+                </button>
+              </>
+            ) : (
+              <>
+                <p>No payment method selected</p>
+                <button
+                  onClick={() => router.push('/pages/payments')}
+                  className="mt-4 text-blue-500 underline"
+                >
+                  Add a payment method
+                </button>
+              </>
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* Reserve Button */}
-      <button
-        onClick={handleReservation}
-        className="mt-6 w-full max-w-lg bg-black text-white py-3 rounded-lg shadow-md"
-      >
-        Reserve
-      </button>
-      <button className="absolute top-4 left-4 p-2 bg-white rounded-full shadow-lg" onClick={() => router.back()}>
+        {/* Reserve Button */}
+        <button
+          onClick={handleReservation}
+          className="mt-6 w-full max-w-lg bg-buttonPrimary text-white py-3 rounded-lg shadow-md"
+        >
+          Reserve
+        </button>
+        <button className="absolute top-4 left-4 p-2 bg-white rounded-full shadow-lg" onClick={() => router.back()}>
           Back
         </button>
+      </main>
+      {isDesktop && <Footer />}
 
       {/* Modal for Selecting Payment Method */}
       {isModalOpen && (
@@ -206,7 +215,7 @@ export default function Payment({ params }) {
             ) : (
               <p>No payment methods available</p>
             )}
-            <button className="mt-4 w-full bg-blue-500 text-white py-2 rounded-lg" onClick={closeModal}>
+            <button className="mt-4 w-full bg-buttonPrimary text-white py-2 rounded-lg" onClick={closeModal}>
               Close
             </button>
           </div>

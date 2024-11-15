@@ -106,7 +106,7 @@ const BookingDetails = () => {
           </div>
         </div>
 
-        <button className="w-full bg-black text-white py-3 rounded-lg text-center font-medium mt-4">Cancel</button>
+        
       </div>
     </div>
   );

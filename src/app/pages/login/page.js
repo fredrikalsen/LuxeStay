@@ -87,11 +87,17 @@ export default function Login() {
           {error && <p className="text-red-500 mb-4">{error}</p>}
           <button
             type="submit"
-            className="w-full bg-green-500 text-white p-3 rounded-lg"
+            className="w-full bg-black text-white p-3 rounded-lg"
           >
-            Login
+            Continue
           </button>
         </form>
+        <div className="mt-4 text-center">
+          <p className="text-sm text-gray-600">
+            Don't have an account?{' '}
+            <a href="/pages/register" className="text-black font-semibold">Register here</a>
+          </p>
+        </div>
       </div>
     </div>
   );

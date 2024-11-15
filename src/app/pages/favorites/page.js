@@ -7,6 +7,7 @@ import { db } from '../../../../firebaseConfig';
 import { doc, getDoc, updateDoc, arrayRemove } from 'firebase/firestore'; 
 import Navbar from '../../components/Navbar';
 import NavbarDesktop from '../../components/NavbarDesktop'; // Import your NavbarDesktop component
+import Footer from '../../components/Footer'; // Import Footer component
 
 export default function Favorites() {
   const [userFavorites, setUserFavorites] = useState([]);
@@ -111,13 +112,13 @@ export default function Favorites() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col"> {/* Ensure the page takes at least the full screen height */}
+    <div className="min-h-screen flex flex-col">
       {isDesktop ? (
         <NavbarDesktop user={auth.currentUser} favoriteIds={userFavorites} /> // Show Desktop Navbar
       ) : (
         <Navbar /> // Show Mobile Navbar
       )}
-      <div className="flex flex-col items-center p-6 flex-grow"> {/* Use flex-grow to fill available space */}
+      <div className="flex flex-col items-center p-6 flex-grow">
         <h1 className="text-3xl font-bold mb-8">Favorites</h1>
         {properties.length === 0 ? (
           <p>No favorites found.</p>
@@ -127,48 +128,39 @@ export default function Favorites() {
               <li 
                 key={property.id} 
                 className="mb-6 p-4 bg-white rounded-lg shadow-lg flex items-center cursor-pointer hover:bg-gray-100 transition duration-200"
-                onClick={() => handlePropertyClick(property.id)} // Add click handler here
+                onClick={() => handlePropertyClick(property.id)}
               >
-                {/* Property Image */}
                 <img 
-                  src={property.imageUrl || '/placeholder.png'}  // Add a fallback placeholder image
+                  src={property.imageUrl || '/placeholder.png'} 
                   alt={property.title} 
                   className="w-24 h-24 rounded-md object-cover mr-4"
                 />
-
-                {/* Property Details */}
                 <div className="flex-1">
-                  {/* Property Name and Location */}
                   <div className="flex justify-between items-center">
                     <h2 className="text-xl font-semibold">{property.name}</h2>
                   </div>
                   <p className="text-gray-600">{property.location?.city}, {property.location?.country}</p>
-
-                  {/* Rating */}
                   <div className="flex items-center mt-2">
                     <span className="text-yellow-500 text-lg mr-1">★</span>
-                    <span>{property.host.rating || 0}</span> {/* Fallback rating of 0 */}
+                    <span>{property.host.rating || 0}</span>
                     <span className="text-gray-500 ml-1">
                       ({property.reviews ? property.reviews.length : 0})
-                    </span> {/* Fallback for reviews */}
+                    </span>
                   </div>
-
-                  {/* Price */}
                   <p className="text-gray-800 font-bold mt-1">€ {property.price} / night</p>
                 </div>
-
-                {/* Favorite Icon (Remove) */}
                 <div className="ml-4" onClick={(e) => {
-                  e.stopPropagation(); // Prevent navigation on star click
-                  handleRemoveFavorite(property.id); // Remove favorite
+                  e.stopPropagation();
+                  handleRemoveFavorite(property.id);
                 }}>
-                  <button className="text-yellow-500 text-2xl">★</button> {/* White star for removing */}
+                  <button className="text-yellow-500 text-2xl">★</button>
                 </div>
               </li>
             ))}
           </ul>
         )}
       </div>
+      {isDesktop && <Footer />} {/* Footer component for desktop */}
     </div>
   );
 }

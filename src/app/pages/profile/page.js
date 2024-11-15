@@ -77,7 +77,10 @@ export default function ProfilePage() {
             <span>&#x279C;</span>
           </button>
           <div className="border-t border-gray-300"></div>
-          <button className="w-full p-4 flex justify-between items-center text-gray-700">
+          <button 
+            className="w-full p-4 flex justify-between items-center text-gray-700"
+            onClick={() => router.push('/pages/payments')}
+          >
             <span>Payments</span>
             <span>&#x279C;</span>
           </button>

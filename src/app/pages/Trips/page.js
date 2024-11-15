@@ -12,6 +12,7 @@ export default function Trips() {
   const [activeTab, setActiveTab] = useState('upcoming');
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [reviewText, setReviewText] = useState('');
   const [rating, setRating] = useState(5);
   const [reviewerName, setReviewerName] = useState('');
@@ -56,21 +57,27 @@ export default function Trips() {
     setShowModal(true);
   };
 
-  const cancelBooking = async (booking) => {
-    const userId = auth.currentUser?.uid;
-    if (userId && booking) {
-      try {
+  const handleCancelClick = (booking) => {
+    setSelectedBooking(booking);
+    setShowConfirmModal(true);
+  };
+
+  const handleKeepReservation = () => {
+    setShowConfirmModal(false);
+  };
+
+  const handleCancelReservation = async () => {
+    if (selectedBooking) {
+      const userId = auth.currentUser?.uid;
+      if (userId) {
         const userDocRef = doc(db, 'users', userId);
         await updateDoc(userDocRef, {
-          bookings: arrayRemove(booking),
+          bookings: arrayRemove(selectedBooking),
         });
-        setBookings((prevBookings) => prevBookings.filter((b) => b.propertyId !== booking.propertyId));
-        alert("Booking canceled successfully.");
-      } catch (error) {
-        console.error("Error canceling booking: ", error);
-        alert("There was an error canceling your booking.");
+        setBookings((prevBookings) => prevBookings.filter((b) => b.bookingId !== selectedBooking.bookingId));
       }
     }
+    setShowConfirmModal(false);
   };
 
   const submitReview = async () => {
@@ -78,44 +85,38 @@ export default function Trips() {
       try {
         const propertyId = selectedBooking.propertyId;
         const propertyDocRef = doc(db, 'properties', propertyId);
-  
-        // Prepare the review data in the desired format
+
         const newReview = {
           createdAt: new Date().toLocaleDateString('en-GB'),
           name: reviewerName,
           rating: rating,
           text: reviewText,
         };
-  
-        // Start a transaction to ensure atomic updates
+
         await updateDoc(propertyDocRef, {
-          reviews: arrayUnion(newReview), // Append the new review
+          reviews: arrayUnion(newReview),
         });
-  
-        // Fetch updated property document to calculate new average rating
+
         const propertyDoc = await getDoc(propertyDocRef);
         if (propertyDoc.exists()) {
           const propertyData = propertyDoc.data();
           const reviews = propertyData.reviews || [];
-          
-          // Calculate the new average rating
+
           const totalRatings = reviews.reduce((sum, review) => sum + review.rating, 0) + rating;
           const averageRating = (totalRatings / (reviews.length + 1)).toFixed(1);
-  
-          // Update the host's rating with the new average
+
           await updateDoc(propertyDocRef, {
-            'host.rating': averageRating
+            'host.rating': averageRating,
           });
         }
-  
-        // Reset the review form
+
         setShowModal(false);
         setReviewText('');
         setReviewerName('');
         setRating(5);
-  
+
         alert("Review submitted successfully!");
-  
+
       } catch (error) {
         console.error("Error submitting review: ", error);
         alert("There was an error submitting your review.");
@@ -161,14 +162,14 @@ export default function Trips() {
                     Booking Date: {formatDate(booking.checkInDate)} - {formatDate(booking.checkOutDate)}
                   </p>
                   <h2 className="text-lg font-semibold">{booking.name}</h2>
-                  <p className="text-sm text-gray-500">Marbella, Spain</p>
+                  <p className="text-sm text-gray-500"></p>
                 </div>
               </div>
               <div className="flex justify-between">
                 {activeTab === 'upcoming' && (
                   <button
-                    onClick={() => cancelBooking(booking)}
-                    className="bg-gray-400 text-white py-2 px-4 rounded-md"
+                    onClick={() => handleCancelClick(booking)}
+                    className="bg-gray-200 text-black py-2 px-4 rounded-md"
                   >
                     Cancel
                   </button>
@@ -181,29 +182,35 @@ export default function Trips() {
                     Write a Review
                   </button>
                 )}
-<button
-  onClick={() => {
-    const query = new URLSearchParams({
-      bookingId: booking.bookingId,
-      checkInDate: booking.checkInDate,
-      checkOutDate: booking.checkOutDate,
-      cleaningFee: booking.cleaningFee,
-      createdAt: booking.createdAt,
-      imageUrl: booking.imageUrl,
-      name: booking.name,
-      nights: booking.nights,
-      pricePerNight: booking.pricePerNight,
-      propertyId: booking.propertyId,
-      serviceFee: booking.serviceFee,
-      totalPrice: booking.totalPrice,
-      location: 'Marbella, Spain' // Assuming location is static or you can replace it with dynamic value
-    }).toString();
-    router.push(`/pages/Booking-details/${booking.propertyId}?${query}`);
-  }}
-  className="bg-black text-white py-2 px-4 rounded-md"
->
-  View Details
-</button>
+                <button
+                  onClick={() => {
+                    const query = new URLSearchParams({
+                      bookingId: booking.bookingId,
+                      checkInDate: booking.checkInDate,
+                      checkOutDate: booking.checkOutDate,
+                      cleaningFee: booking.cleaningFee,
+                      createdAt: booking.createdAt,
+                      imageUrl: booking.imageUrl,
+                      name: booking.name,
+                      nights: booking.nights,
+                      pricePerNight: booking.pricePerNight,
+                      propertyId: booking.propertyId,
+                      serviceFee: booking.serviceFee,
+                      totalPrice: booking.totalPrice,
+                      location: 'Marbella, Spain' // Assuming location is static or you can replace it with dynamic value
+                    }).toString();
+                    if (activeTab === 'done') {
+                      // Redirect to the booking page for "Book Again"
+                      router.push(`/pages/${booking.propertyId}`);
+                    } else {
+                      // Redirect to the details page for "View Details"
+                      router.push(`/pages/Booking-details/${booking.propertyId}?${query}`);
+                    }
+                  }}
+                  className={`py-2 px-4 rounded-md ${activeTab === 'done' ? 'bg-black text-white' : 'bg-black text-white'}`}
+                >
+                  {activeTab === 'done' ? 'Book Again' : 'View Details'}
+                </button>
               </div>
             </div>
           ))
@@ -239,10 +246,10 @@ export default function Trips() {
                 placeholder="Write your review..."
                 className="w-full border rounded-md p-2 mb-4"
               />
-              <div className="flex justify-between">
+              <div className="flex justify-end">
                 <button
                   onClick={() => setShowModal(false)}
-                  className="bg-gray-200 text-black py-2 px-4 rounded-md"
+                  className="text-gray-500 mr-4"
                 >
                   Cancel
                 </button>
@@ -251,6 +258,28 @@ export default function Trips() {
                   className="bg-black text-white py-2 px-4 rounded-md"
                 >
                   Submit
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showConfirmModal && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="bg-white p-6 rounded-md shadow-md">
+              <h2 className="text-xl font-semibold mb-4">Are you sure you want to cancel your reservation?</h2>
+              <div className="flex justify-end">
+                <button
+                  onClick={handleKeepReservation}
+                  className="bg-gray-200 text-black py-2 px-4 rounded-md mr-4"
+                >
+                  Keep Reservation
+                </button>
+                <button
+                  onClick={handleCancelReservation}
+                  className="bg-red-500 text-white py-2 px-4 rounded-md"
+                >
+                  Cancel Reservation
                 </button>
               </div>
             </div>

@@ -1,4 +1,4 @@
-'use client';
+'use client'
 
 import { useEffect, useState } from 'react';
 import { collection, getDocs, doc, updateDoc, arrayUnion, arrayRemove, getDoc } from 'firebase/firestore';
@@ -10,6 +10,7 @@ import SearchBar from './components/Searchbar';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../../firebaseConfig';
 import { useMediaQuery } from 'react-responsive';
+import Footer from './components/Footer';
 
 export default function Home() {
   const [properties, setProperties] = useState([]);
@@ -18,7 +19,6 @@ export default function Home() {
   const [user, setUser] = useState(null);
   const [favoriteIds, setFavoriteIds] = useState([]);
   
-  // Media query to check if the user is on a desktop screen
   const isDesktop = useMediaQuery({ minWidth: 1024 });
 
   useEffect(() => {
@@ -132,11 +132,11 @@ export default function Home() {
   }
 
   return (
-    <div className="relative min-h-screen pb-16">
-      {/* Conditionally render the SearchBar or NavbarDesktop based on screen size */}
+    <div className="flex flex-col min-h-screen">
+      
       {isDesktop ? <NavbarDesktop /> : <SearchBar onSearch={handleSearch} onApplyFilters={handleApplyFilters} />}
 
-      <div className="container mx-auto p-6">
+      <main className="flex-grow container mx-auto p-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {filteredProperties.length > 0 ? (
             filteredProperties.map((property) => (
@@ -171,10 +171,11 @@ export default function Home() {
             <p>No properties found for the selected criteria.</p>
           )}
         </div>
-      </div>
+      </main>
 
-      {/* Conditionally render Navbar based on screen size */}
       {!isDesktop && <Navbar />}
+
+      {isDesktop && <Footer className="mt-auto" />}
     </div>
   );
 }
