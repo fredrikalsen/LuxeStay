@@ -1,4 +1,4 @@
-import { auth } from '../../../firebaseConfig'; // Adjust the path as needed
+import { auth } from '../../../firebaseConfig'; 
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 
 export const signUp = async (email, password) => {

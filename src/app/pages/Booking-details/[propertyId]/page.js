@@ -1,12 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSearchParams, useParams } from 'next/navigation';
+import { useSearchParams, useParams, useRouter } from 'next/navigation';
 import { auth } from '../../../../../firebaseConfig';
 import Navbar from '../../../components/Navbar';
 import NavbarDesktop from '../../../components/NavbarDesktop';
+import { ArrowLeftIcon } from '@heroicons/react/outline';
 
 const BookingDetails = () => {
+  const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
 
@@ -21,7 +23,7 @@ const BookingDetails = () => {
   const pricePerNight = searchParams.get('pricePerNight');
   const serviceFee = searchParams.get('serviceFee');
   const totalPrice = searchParams.get('totalPrice');
-  const guests = searchParams.get('guests') || '10'; // Default to 10 if not provided
+  const guests = searchParams.get('guests') || '10'; 
 
   const [isDesktop, setIsDesktop] = useState(false);
 
@@ -105,6 +107,12 @@ const BookingDetails = () => {
             <span>Total Price:</span> <span>€{totalPrice}</span>
           </div>
         </div>
+        <button
+          className="absolute top-20 left-4 p-2 bg-white rounded-full shadow-lg text-gray-800 flex items-center justify-center font-semibold"
+          onClick={() => router.back()}
+        >
+          <ArrowLeftIcon className="w-5 h-5" /> {/* Heroicons arrow */}
+        </button>
 
         
       </div>

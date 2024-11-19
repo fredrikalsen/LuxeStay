@@ -7,7 +7,7 @@ import { doc, updateDoc, arrayUnion, getDoc } from 'firebase/firestore';
 import { auth, db } from '../../../../../firebaseConfig';
 import { useRouter } from 'next/navigation';
 import { FaCcVisa, FaCcMastercard } from 'react-icons/fa';
-import { v4 as uuidv4 } from 'uuid'; // Import UUID library
+import { v4 as uuidv4 } from 'uuid'; 
 import Navbar from '../../../components/Navbar';
 import NavbarDesktop from '../../../components/NavbarDesktop';
 import Footer from '../../../components/Footer';
@@ -29,6 +29,8 @@ export default function Payment({ params }) {
   const serviceFee = searchParams.get('serviceFee');
   const checkInDate = searchParams.get('checkInDate');
   const checkOutDate = searchParams.get('checkOutDate');
+  const location = searchParams.get('location'); 
+  const guests = searchParams.get('guests'); 
 
   const [paymentMethods, setPaymentMethods] = useState([]);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
@@ -43,7 +45,7 @@ export default function Payment({ params }) {
         if (userDoc.exists()) {
           const methods = userDoc.data().paymentMethods || [];
           setPaymentMethods(methods);
-          setSelectedPaymentMethod(methods[0]); // Select the first method by default
+          setSelectedPaymentMethod(methods[0]); 
         }
       }
     };
@@ -62,7 +64,7 @@ export default function Payment({ params }) {
     const bookingId = uuidv4();
 
     const booking = {
-      bookingId, // Include the booking ID
+      bookingId, 
       propertyId: Id,
       name,
       imageUrl,
@@ -73,6 +75,8 @@ export default function Payment({ params }) {
       pricePerNight,
       cleaningFee,
       serviceFee,
+      location, 
+      guests, 
       createdAt: new Date(),
     };
 
@@ -83,7 +87,7 @@ export default function Payment({ params }) {
         bookings: arrayUnion(booking),
       });
 
-      router.push(`/pages/Booking-confirmation?totalPrice=${totalPrice}&name=${encodeURIComponent(name)}&imageUrl=${encodeURIComponent(imageUrl)}&nights=${nights}&pricePerNight=${pricePerNight}&cleaningFee=${cleaningFee}&serviceFee=${serviceFee}&checkInDate=${checkInDate}&checkOutDate=${checkOutDate}`);
+      router.push(`/pages/Booking-confirmation?totalPrice=${totalPrice}&name=${encodeURIComponent(name)}&imageUrl=${encodeURIComponent(imageUrl)}&nights=${nights}&pricePerNight=${pricePerNight}&cleaningFee=${cleaningFee}&serviceFee=${serviceFee}&checkInDate=${checkInDate}&checkOutDate=${checkOutDate}&location=${encodeURIComponent(location)}&guests=${guests}`);
       
     } catch (error) {
       console.error('Error adding booking:', error);
@@ -112,7 +116,7 @@ export default function Payment({ params }) {
             <img src={imageUrl} alt={name} className="w-16 h-16 object-cover rounded-md mr-4" />
             <div>
               <h1 className="text-lg font-semibold">{name}</h1>
-              <p className="text-gray-500">Marbella, Spain</p>
+              <p className="text-gray-500">{location}</p> {/* Use location parameter */}
             </div>
           </div>
 

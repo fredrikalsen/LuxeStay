@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from '../../../firebaseConfig'; // Adjust the path as needed
+import { auth } from '../../../firebaseConfig'; 
 import { HomeIcon, HeartIcon, UserIcon, GlobeAltIcon } from '@heroicons/react/solid';
 
 export default function Navbar() {

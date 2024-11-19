@@ -8,6 +8,7 @@ import Navbar from '../../../components/Navbar';
 import NavbarDesktop from '../../../components/NavbarDesktop';
 import Footer from '../../../components/Footer';
 import { useMediaQuery } from 'react-responsive';
+import { ArrowLeftIcon } from '@heroicons/react/outline';
 
 export default function BookingRequest({ params }) {
   const { Id } = params; 
@@ -28,8 +29,9 @@ export default function BookingRequest({ params }) {
     const name = urlParams.get('name');
     const price = urlParams.get('price');
     const imageUrl = urlParams.get('imageUrl');
+    const location = urlParams.get('location');
 
-    setPropertyDetails({ name, price: Number(price), imageUrl });
+    setPropertyDetails({ name, price: Number(price), imageUrl, location });
   }, []);
 
   useEffect(() => {
@@ -44,7 +46,7 @@ export default function BookingRequest({ params }) {
   }, [checkInDate, checkOutDate, propertyDetails]);
 
   const handleConfirmBooking = () => {
-    const url = `/pages/Payment/${Id}?totalPrice=${totalPrice}&name=${encodeURIComponent(propertyDetails.name)}&imageUrl=${encodeURIComponent(propertyDetails.imageUrl)}&nights=${nights}&pricePerNight=${propertyDetails.price}&cleaningFee=${cleaningFee}&serviceFee=${serviceFee}&checkInDate=${encodeURIComponent(checkInDate.toISOString())}&checkOutDate=${encodeURIComponent(checkOutDate.toISOString())}&guests=${guests}`;
+    const url = `/pages/Payment/${Id}?totalPrice=${totalPrice}&name=${encodeURIComponent(propertyDetails.name)}&imageUrl=${encodeURIComponent(propertyDetails.imageUrl)}&nights=${nights}&pricePerNight=${propertyDetails.price}&cleaningFee=${cleaningFee}&serviceFee=${serviceFee}&checkInDate=${encodeURIComponent(checkInDate.toISOString())}&checkOutDate=${encodeURIComponent(checkOutDate.toISOString())}&guests=${guests}&location=${encodeURIComponent(propertyDetails.location)}`;
     router.push(url);
   };
 
@@ -52,7 +54,7 @@ export default function BookingRequest({ params }) {
     return <div>Loading...</div>;
   }
 
-  const { name, price, imageUrl } = propertyDetails;
+  const { name, price, imageUrl, location } = propertyDetails;
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -65,7 +67,7 @@ export default function BookingRequest({ params }) {
             <img src={imageUrl} alt={name} className="w-16 h-16 object-cover rounded-md mr-4" />
             <div>
               <h1 className="text-lg font-semibold">{name}</h1>
-              <p className="text-gray-500">Marbella, Spain</p>
+              <p className="text-gray-500">{location}</p>
             </div>
           </div>
 
@@ -145,8 +147,11 @@ export default function BookingRequest({ params }) {
         >
           Confirm Booking
         </button>
-        <button className="absolute top-4 left-4 p-2 bg-white rounded-full shadow-lg" onClick={() => router.back()}>
-          Back
+        <button
+          className="absolute top-24 left-4 p-2 bg-white rounded-full shadow-lg text-gray-800 flex items-center justify-center font-semibold"
+          onClick={() => router.back()}
+        >
+          <ArrowLeftIcon className="w-5 h-5" /> {/* Heroicons arrow */}
         </button>
       </main>
       {isDesktop && <Footer />}

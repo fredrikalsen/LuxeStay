@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { UserIcon } from '@heroicons/react/solid';
-import { auth, db } from '../../../firebaseConfig'; // Adjust the path according to your structure
+import { auth, db } from '../../../firebaseConfig'; 
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 

@@ -1,14 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import { useRouter } from 'next/navigation';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../../../firebaseConfig';
 import dynamic from 'next/dynamic';
 import 'leaflet/dist/leaflet.css';
 import { ArrowLeftIcon } from '@heroicons/react/outline';
+import { Dialog, Transition } from '@headlessui/react';
 
-// Dynamically import Leaflet components
 const MapContainer = dynamic(() => import('react-leaflet').then(mod => mod.MapContainer), { ssr: false });
 const TileLayer = dynamic(() => import('react-leaflet').then(mod => mod.TileLayer), { ssr: false });
 const Marker = dynamic(() => import('react-leaflet').then(mod => mod.Marker), { ssr: false });
@@ -17,6 +17,8 @@ const Popup = dynamic(() => import('react-leaflet').then(mod => mod.Popup), { ss
 export default function PropertyDetails({ params }) {
   const router = useRouter();
   const [property, setProperty] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [filter, setFilter] = useState('date');
   const { Id } = params;
 
   useEffect(() => {
@@ -47,18 +49,32 @@ export default function PropertyDetails({ params }) {
   };
 
   if (!property) {
-    return <div>Loading...</div>;
+    return <div>Loading.</div>;
   }
 
   const position = [property.map_location.lat, property.map_location.lng];
 
   const handleRequest = () => {
-    const url = `/pages/Booking-request/${Id}?name=${encodeURIComponent(property.name)}&price=${property.price}&imageUrl=${encodeURIComponent(property.imageUrl || '/placeholder.jpg')}`;
+    const url = `/pages/Booking-request/${Id}?name=${encodeURIComponent(property.name)}&price=${property.price}&imageUrl=${encodeURIComponent(property.imageUrl || '/placeholder.jpg')}&location=${encodeURIComponent(property.location.city + ', ' + property.location.country)}`;
     router.push(url);
   };
 
+  const handleFilterChange = (e) => {
+    setFilter(e.target.value);
+  };
+
+  const sortedReviews = [...(property.reviews || [])].sort((a, b) => {
+    if (filter === 'highest') {
+      return b.rating - a.rating;
+    } else if (filter === 'lowest') {
+      return a.rating - b.rating;
+    } else {
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    }
+  });
+
   return (
-    <div className="bg-gray-100">
+    <div>
       {/* Property Image */}
       <div className="relative mb-8">
         <img
@@ -67,11 +83,10 @@ export default function PropertyDetails({ params }) {
           className="w-full h-[500px] object-cover"
         />
         <button
-          className="absolute top-4 left-4 p-2 bg-white rounded-full shadow-lg text-gray-800 flex items-center font-semibold"
+          className="absolute top-4 left-4 p-2 bg-white rounded-full shadow-lg text-gray-800 flex items-center justify-center font-semibold"
           onClick={() => router.back()}
         >
-          <ArrowLeftIcon className="w-5 h-5 mr-2" /> {/* Heroicons arrow */}
-         
+          <ArrowLeftIcon className="w-5 h-5" /> {/* Heroicons arrow */}
         </button>
       </div>
 
@@ -93,8 +108,8 @@ export default function PropertyDetails({ params }) {
 
         {/* Booking & Price Details */}
         <div className="bg-white p-6 rounded-lg shadow-md flex flex-col items-center justify-center">
-        <h1 className="text-3xl font-bold mb-2">{property.name}</h1>
-        <p className="text-gray-500">{property.location.city}, {property.location.country}</p>
+          <h1 className="text-3xl font-bold mb-2">{property.name}</h1>
+          <p className="text-gray-500">{property.location.city}, {property.location.country}</p>
           <p className="text-2xl font-semibold text-gray-800 mt-2">{property.price}€ / night</p>
           <p className="text-gray-600 mt-2">{property.guests} guests • {property.bedrooms} bedrooms • {property.beds} beds • {property.bathrooms} bathrooms</p>
           <button
@@ -106,7 +121,7 @@ export default function PropertyDetails({ params }) {
         </div>
       </div>
 
-      {/* Additional Sections */}
+      {/* Property Details */}
       <div className="max-w-7xl mx-auto px-8 py-8 space-y-8">
         {/* Map */}
         <div className="bg-white p-6 rounded-lg shadow-md">
@@ -124,6 +139,15 @@ export default function PropertyDetails({ params }) {
               </MapContainer>
             )}
           </div>
+        </div>
+
+        {/* Offers */}
+        <div className="p-6 bg-white rounded-lg shadow-md">
+          <h3 className="font-semibold text-lg">What this place offers</h3>
+          {property.offers.kitchen && <p>✔ Kitchen</p>}
+          {property.offers.wifi && <p>✔ Wifi</p>}
+          {property.offers.no_parking && <p>✔ Parking</p>}
+          {property.offers.pets_allowed && <p>✔ Pets allowed</p>}
         </div>
 
         {/* Safety */}
@@ -164,21 +188,97 @@ export default function PropertyDetails({ params }) {
         <div className="p-6 bg-white rounded-lg shadow-md">
           <h3 className="font-semibold text-lg">Reviews</h3>
           {property.reviews && property.reviews.length > 0 ? (
-            <div className="flex overflow-x-auto space-x-4 mt-4">
-              {property.reviews.slice(0, 5).map((review, index) => (
-                <div key={index} className="min-w-[250px] border p-4 rounded-lg shadow-sm flex-shrink-0">
-                  <p className="font-semibold">{review.name}</p> 
-                  <p className="text-gray-500">{review.createdAt}</p>
-                  <p className="mt-2">{review.text}</p>
-                  <div className="flex mt-1">{renderStars(review.rating)}</div>
-                </div>
-              ))}
+            <div>
+              <div className="flex overflow-x-auto space-x-4 mt-4">
+                {property.reviews.slice(0, 5).map((review, index) => (
+                  <div key={index} className="min-w-[250px] border p-4 rounded-lg shadow-sm flex-shrink-0">
+                    <p className="font-semibold">{review.name}</p>
+                    <p className="text-gray-500">{review.createdAt}</p>
+                    <p className="mt-2">{review.text}</p>
+                    <div className="flex mt-1">{renderStars(review.rating)}</div>
+                  </div>
+                ))}
+              </div>
+              <button
+                className="mt-4 bg-accent text-white p-3 rounded-lg font-semibold"
+                onClick={() => setIsModalOpen(true)}
+              >
+                Show All Reviews
+              </button>
             </div>
           ) : (
             <p>No reviews available.</p>
           )}
         </div>
       </div>
+
+      {/* Modal */}
+      <Transition appear show={isModalOpen} as={Fragment}>
+        <Dialog as="div" className="relative z-10" onClose={() => setIsModalOpen(false)}>
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black bg-opacity-25" />
+          </Transition.Child>
+
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4 text-center">
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <Dialog.Panel className="w-full max-w-3xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                  <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-gray-900">
+                    All Reviews
+                  </Dialog.Title>
+                  <div className="flex justify-between items-center mt-4">
+                    <h2 className="text-lg font-medium">Reviews</h2>
+                    <select value={filter} onChange={handleFilterChange} className="ml-4">
+                      <option value="date">Date</option>
+                      <option value="highest">Highest Rating</option>
+                      <option value="lowest">Lowest Rating</option>
+                    </select>
+                  </div>
+                  <div className="mt-4 space-y-4">
+                    {sortedReviews.length > 0 ? (
+                      sortedReviews.map((review, index) => (
+                        <div key={index} className="border p-4 rounded-lg shadow-sm">
+                          <p className="font-semibold">{review.name}</p>
+                          <p className="text-gray-500">{review.createdAt}</p>
+                          <p className="mt-2">{review.text}</p>
+                          <div className="flex mt-1">{renderStars(review.rating)}</div>
+                        </div>
+                      ))
+                    ) : (
+                      <p>No reviews available.</p>
+                    )}
+                  </div>
+                  <div className="mt-4">
+                    <button
+                      type="button"
+                      className="inline-flex justify-center rounded-md border border-transparent bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-dark focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+                      onClick={() => setIsModalOpen(false)}
+                    >
+                      Close
+                    </button>
+                  </div>
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
     </div>
   );
 }

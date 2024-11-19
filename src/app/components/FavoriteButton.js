@@ -1,5 +1,5 @@
 import React from 'react';
-import { db } from '../../firebaseConfig'; // Adjust the path as necessary
+import { db } from '../../firebaseConfig'; 
 import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
 
 const FavoriteButton = ({ userId, propertyId }) => {

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 const FilterModal = ({ onClose, onApply }) => {
-  const [priceRange, setPriceRange] = useState([0, 9500]); // Adjusted price range
+  const [priceRange, setPriceRange] = useState([0, 9500]); 
   const [guests, setGuests] = useState('Any');
   const [features, setFeatures] = useState({
     beach_view: false,

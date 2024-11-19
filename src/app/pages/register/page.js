@@ -6,6 +6,7 @@ import { auth } from '../../../../firebaseConfig'; // Adjust path to your Fireba
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { db } from '../../../../firebaseConfig'; // Ensure you import your Firestore configuration
 import { doc, setDoc } from 'firebase/firestore'; // Import Firestore functions
+import { ArrowLeftIcon } from '@heroicons/react/outline';
 
 export default function Register() {
   const [email, setEmail] = useState('');
@@ -15,10 +16,10 @@ export default function Register() {
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    setError(null); // Clear previous errors
+    setError(null); 
 
     try {
-      // Create user with email and password
+      
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const userId = userCredential.user.uid; // Get the userId
 
@@ -27,15 +28,15 @@ export default function Register() {
       // Create a user document in Firestore with bookings array
       await setDoc(doc(db, 'users', userId), {
         email: email,
-        favorites: [], // Initialize an empty favorites array
-        bookings: [], // Initialize an empty bookings array
+        favorites: [], 
+        bookings: [], 
       });
 
       // Redirect to a welcome page or home page after successful registration
-      router.push('/'); // Adjust the route as needed
+      router.push('/'); 
     } catch (err) {
       console.error('Error registering:', err);
-      setError(err.message); // Set the error message to display
+      setError(err.message); 
     }
   };
 
@@ -72,6 +73,12 @@ export default function Register() {
             Continue
           </button>
         </form>
+        <button
+          className="absolute top-12 left-4 p-2 bg-white rounded-full shadow-lg text-gray-800 flex items-center justify-center font-semibold"
+          onClick={() => router.back()}
+        >
+          <ArrowLeftIcon className="w-5 h-5" /> {/* Heroicons arrow */}
+        </button>
       </div>
     </div>
   );

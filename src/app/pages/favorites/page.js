@@ -6,27 +6,28 @@ import { auth } from '../../../../firebaseConfig';
 import { db } from '../../../../firebaseConfig';
 import { doc, getDoc, updateDoc, arrayRemove } from 'firebase/firestore'; 
 import Navbar from '../../components/Navbar';
-import NavbarDesktop from '../../components/NavbarDesktop'; // Import your NavbarDesktop component
-import Footer from '../../components/Footer'; // Import Footer component
+import NavbarDesktop from '../../components/NavbarDesktop'; 
+import Footer from '../../components/Footer'; 
+import { ArrowLeftIcon } from '@heroicons/react/outline';
 
 export default function Favorites() {
   const [userFavorites, setUserFavorites] = useState([]);
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
-  const router = useRouter(); // Initialize router
-  const [isDesktop, setIsDesktop] = useState(false); // State to track screen size
+  const router = useRouter(); 
+  const [isDesktop, setIsDesktop] = useState(false); 
 
-  // Check if the screen size is desktop
+  
   useEffect(() => {
     const handleResize = () => {
-      setIsDesktop(window.innerWidth >= 768); // Adjust the threshold as needed
+      setIsDesktop(window.innerWidth >= 768); 
     };
 
-    handleResize(); // Check the size on component mount
-    window.addEventListener('resize', handleResize); // Add listener for window resize
+    handleResize(); 
+    window.addEventListener('resize', handleResize); 
 
     return () => {
-      window.removeEventListener('resize', handleResize); // Cleanup listener on unmount
+      window.removeEventListener('resize', handleResize); 
     };
   }, []);
 
@@ -76,12 +77,12 @@ export default function Favorites() {
     }
   }, [userFavorites]);
 
-  // Function to navigate to property details page
+ 
   const handlePropertyClick = (id) => {
     router.push(`/pages/${id}`);
   };
 
-  // Function to remove property from favorites
+  
   const handleRemoveFavorite = async (propertyId) => {
     const user = auth.currentUser;
 
@@ -89,12 +90,12 @@ export default function Favorites() {
       const userRef = doc(db, 'users', user.uid);
 
       try {
-        // Remove the property ID from the user's favorites array
+       
         await updateDoc(userRef, {
           favorites: arrayRemove(propertyId),
         });
 
-        // Update the local state to reflect the change without refetching
+        
         setUserFavorites((prevFavorites) =>
           prevFavorites.filter((favorite) => favorite !== propertyId)
         );
@@ -114,9 +115,9 @@ export default function Favorites() {
   return (
     <div className="min-h-screen flex flex-col">
       {isDesktop ? (
-        <NavbarDesktop user={auth.currentUser} favoriteIds={userFavorites} /> // Show Desktop Navbar
+        <NavbarDesktop user={auth.currentUser} favoriteIds={userFavorites} /> 
       ) : (
-        <Navbar /> // Show Mobile Navbar
+        <Navbar /> 
       )}
       <div className="flex flex-col items-center p-6 flex-grow">
         <h1 className="text-3xl font-bold mb-8">Favorites</h1>
@@ -155,12 +156,18 @@ export default function Favorites() {
                 }}>
                   <button className="text-yellow-500 text-2xl">★</button>
                 </div>
+                <button
+          className="absolute top-16 left-4 p-2 bg-white rounded-full shadow-lg text-gray-800 flex items-center justify-center font-semibold"
+          onClick={() => router.back()}
+        >
+          <ArrowLeftIcon className="w-5 h-5" /> 
+        </button>
               </li>
             ))}
           </ul>
         )}
       </div>
-      {isDesktop && <Footer />} {/* Footer component for desktop */}
+      {isDesktop && <Footer />} 
     </div>
   );
 }

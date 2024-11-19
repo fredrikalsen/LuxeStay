@@ -6,6 +6,7 @@ import { doc, getDoc, updateDoc, arrayRemove, arrayUnion } from 'firebase/firest
 import { useRouter } from 'next/navigation';
 import Navbar from '../../components/Navbar';
 import NavbarDesktop from '../../components/NavbarDesktop';
+import { ArrowLeftIcon } from '@heroicons/react/outline';
 
 export default function Trips() {
   const [bookings, setBookings] = useState([]);
@@ -17,11 +18,12 @@ export default function Trips() {
   const [rating, setRating] = useState(5);
   const [reviewerName, setReviewerName] = useState('');
   const [isDesktop, setIsDesktop] = useState(false);
+  const [showThankYouModal, setShowThankYouModal] = useState(false); 
   const router = useRouter();
 
   useEffect(() => {
     const handleResize = () => {
-      setIsDesktop(window.innerWidth >= 768); // Adjust threshold as needed
+      setIsDesktop(window.innerWidth >= 768); 
     };
     handleResize();
     window.addEventListener('resize', handleResize);
@@ -115,7 +117,7 @@ export default function Trips() {
         setReviewerName('');
         setRating(5);
 
-        alert("Review submitted successfully!");
+        setShowThankYouModal(true); 
 
       } catch (error) {
         console.error("Error submitting review: ", error);
@@ -146,6 +148,12 @@ export default function Trips() {
             Done
           </button>
         </div>
+        
+        <button className="absolute top-15 left-4 p-2 bg-white rounded-full shadow-lg text-gray-800 flex items-center justify-center font-semibold"
+        onClick={() => router.back()}
+        >
+       <ArrowLeftIcon className="w-5 h-5" /> 
+      </button>
 
         {filteredBookings.length > 0 ? (
           filteredBookings.map((booking, index) => (
@@ -162,7 +170,7 @@ export default function Trips() {
                     Booking Date: {formatDate(booking.checkInDate)} - {formatDate(booking.checkOutDate)}
                   </p>
                   <h2 className="text-lg font-semibold">{booking.name}</h2>
-                  <p className="text-sm text-gray-500"></p>
+                  <p className="text-sm text-gray-500">{booking.location}</p> {/* Display location */}
                 </div>
               </div>
               <div className="flex justify-between">
@@ -197,7 +205,8 @@ export default function Trips() {
                       propertyId: booking.propertyId,
                       serviceFee: booking.serviceFee,
                       totalPrice: booking.totalPrice,
-                      location: 'Marbella, Spain' // Assuming location is static or you can replace it with dynamic value
+                      location: booking.location,
+                      guests: booking.guests // Use the actual location
                     }).toString();
                     if (activeTab === 'done') {
                       // Redirect to the booking page for "Book Again"
@@ -265,23 +274,58 @@ export default function Trips() {
         )}
 
         {showConfirmModal && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-            <div className="bg-white p-6 rounded-md shadow-md">
-              <h2 className="text-xl font-semibold mb-4">Are you sure you want to cancel your reservation?</h2>
-              <div className="flex justify-end">
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+            <div className="bg-white p-6 rounded-lg shadow-lg w-96 relative">
+              <button
+                onClick={() => setShowConfirmModal(false)}
+                className="absolute top-2 right-2 text-gray-500 hover:text-black"
+              >
+                ✕
+              </button>
+              <h2 className="text-lg font-medium text-gray-800 mb-6 text-center">
+                Are you sure you want to cancel your reservation?
+              </h2>
+              <div className="flex justify-center gap-4">
                 <button
                   onClick={handleKeepReservation}
-                  className="bg-gray-200 text-black py-2 px-4 rounded-md mr-4"
+                  className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-100"
                 >
                   Keep Reservation
                 </button>
                 <button
                   onClick={handleCancelReservation}
-                  className="bg-red-500 text-white py-2 px-4 rounded-md"
+                  className="px-6 py-2 bg-black text-white rounded-md hover:bg-gray-800"
                 >
                   Cancel Reservation
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Thank You Modal */}
+        {showThankYouModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+            <div className="bg-white p-6 rounded-lg w-80 shadow-lg text-center">
+              <button
+                className="absolute top-2 right-2 text-gray-500"
+                onClick={() => setShowThankYouModal(false)}
+              >
+                ✕
+              </button>
+              <h2 className="text-lg font-bold text-yellow-500">LuxeStay</h2>
+              <p className="text-sm font-medium mt-4">
+                Thank you for submitting your review!
+              </p>
+              <p className="text-sm text-gray-500 mt-2">
+                Your feedback helps us maintain the highest standards of luxury.
+              </p>
+              <button
+                className="bg-black text-white mt-4 px-4 py-2 rounded"
+                onClick={() => setShowThankYouModal(false)}
+              >
+                Keep Browsing
+              </button>
             </div>
           </div>
         )}
